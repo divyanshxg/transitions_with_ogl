@@ -325,7 +325,7 @@ export default class App {
 
     if (this.transition.current == "slider") {
       this.initiateChange = true
-      this.scene.position.x = this.scroll.current / 40
+      this.scene.position.x = -this.scroll.current / 40
     }
 
     if (this.transition.current == "flat") {

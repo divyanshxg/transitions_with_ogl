@@ -483,7 +483,7 @@ export default class Media {
     }
 
     if (shape == "slider") {
-      this.program.uniforms.uStrength.value = -factor
+      this.program.uniforms.uStrength.value = factor
       this.program.uniforms.shape.value = 2
     }
 
