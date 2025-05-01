@@ -15,6 +15,7 @@ export default class App {
       current: 0,
       target: 0,
     };
+
     this.distanceEase = 1
     this.transition = {
       current: "flat",
@@ -25,16 +26,18 @@ export default class App {
     // this object contains the position of sphere, flat  and slider
     this.positions = {}
     this.onSlider = false
-    this.createPositions() // filling the positions object
     this.createRenderer()
     this.createCamera()
     this.createScene()
     this.createGeometry()
 
-    this.createMedia()
 
     this.onResize()
 
+    this.createPositions() // filling the positions object
+    this.createMedia()
+    // pos                         //planes
+    // this.totalWidth = 0;
     this.update()
 
     this.addEventListeners()
@@ -134,7 +137,13 @@ export default class App {
       this.sliderPositions.push(new Vec3(xPos, 0, 0))
     }
     this.positions["slider"] = this.sliderPositions
-
+    // Calculate total width
+    // const length = this.images.length;
+    // const sideBySide = length * 12 * 20
+    this.totalWidth = 7700 // experimentation
+    // const xSpan = (200 * (length - 1)) / length;
+    // const planeWidth = 6 * this.screen.width / this.viewport.width; // Scale from Media class
+    // this.totalWidth = xSpan * 0.1 + planeWidth; // Adjust scaling factor as needed
   }
   createFlatPositions() {
 
@@ -300,6 +309,7 @@ export default class App {
     const fov = this.camera.fov * (Math.PI / 180)
     const height = 2 * Math.tan(fov / 2) * this.camera.position.z
     const width = height * this.camera.aspect
+    // console.log(width)
 
     this.viewport = {
       height,
@@ -330,22 +340,36 @@ export default class App {
     }
 
     if (this.transition.current == "slider") {
-      let mapped = gsap.utils.mapRange(7000 * (this.isMobile ? 0.1 : 1), 0, 1, 0, this.scroll.current);
+      this.scroll.current = gsap.utils.clamp(-this.totalWidth, 0, this.scroll.current);
+      this.scroll.target = gsap.utils.clamp(-this.totalWidth, 0, this.scroll.target);
+      let width = this.totalWidth * (this.isMobile ? 0.1 : 1)
+      // let mapped = gsap.utils.mapRange(0, width, 1, 0, this.scroll.current);
+      let mapped = gsap.utils.mapRange(-width, 0, -1, 0, this.scroll.current)
+      let endMap = gsap.utils.mapRange(0, -width, 1, 0, this.scroll.current)
+
       let clamped = gsap.utils.clamp(0, 1, Math.abs(mapped))
+      let endClamped = gsap.utils.clamp(0, 1, Math.abs(endMap))
+
+
+
       this.distanceEase = clamped
       // console.log(clamped)
-      if (this.scroll.current < 1) {
+      if (this.scroll.current < 0.1) {
         //mapping range
         this.initiateChange = true
         this.scene.position.x = -this.scroll.current / (40 * (this.isMobile ? 0.3 : 1))
-        this.scene.position.x *= clamped
-        console.log(this.scene.position.x)
+        // console.log(this.scene.position.x)
+        this.scene.position.x *= (this.distanceEase)
+        // console.log(this.scene.position.x, this.distanceEase)
+        // console.log(this.scene.position.x)
+        // console.log(this.scene.position.x)
       } else {
         this.scroll.target = 0
         this.scroll.current = 0
       }
     }
 
+    // console.log(this.scroll.current)
     if (this.transition.current == "flat") {
       this.initiateChange = false;
     }
@@ -354,7 +378,7 @@ export default class App {
     let factor = (this.scroll.current - this.scroll.target) / 2000
     this.medias.forEach(media => {
       // console.log(this.transition.current)
-      media.update(this.transition.current, this.distanceEase * factor * (this.isMobile ? 3 : 1))
+      media.update(this.transition.current, this.distanceEase * factor * (this.isMobile ? 5 : 2))
     })
 
     window.requestAnimationFrame(this.update.bind(this))
