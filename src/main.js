@@ -2,18 +2,20 @@ import { Renderer, Camera, Transform, Plane, Vec3 } from 'ogl'
 import "./style.css"
 import gsap from 'gsap'
 import normalizeWheel from 'normalize-wheel'
-import { lerp } from './utils/utils'
+import { isMobileDevice, lerp } from './utils/utils'
 import { imageArray } from './utils/assets'
 import Media from './Media'
 
 export default class App {
   constructor() {
     this.images = imageArray
+    this.isMobile = isMobileDevice()
     this.scroll = {
       ease: 0.05,
       current: 0,
       target: 0,
     };
+    this.distanceEase = 1
     this.transition = {
       current: "flat",
       next: "flat"
@@ -22,6 +24,7 @@ export default class App {
 
     // this object contains the position of sphere, flat  and slider
     this.positions = {}
+    this.onSlider = false
     this.createPositions() // filling the positions object
     this.createRenderer()
     this.createCamera()
@@ -80,6 +83,7 @@ export default class App {
         geometry: this.geometry,
         image: image,
         gl: this.gl,
+        division: this.isMobile ? 2 : 1,
         positions: {
           sphere: this.positions.sphere[index],
           flat: this.positions.flat[index],
@@ -115,7 +119,7 @@ export default class App {
     for (let i = 0; i < this.images.length; i++) {
       const phi = Math.acos(-1 + (2 * i) / this.images.length);
       const theta = Math.sqrt(this.images.length * Math.PI) * phi;
-      this.spherePositions.push(this.sphericalCoordinates(13, phi, theta))
+      this.spherePositions.push(this.sphericalCoordinates(this.isMobile ? 6 : 13, phi, theta))
 
     }
     this.positions["sphere"] = this.spherePositions
@@ -218,6 +222,7 @@ export default class App {
       this.medias.forEach(media => {
         media.setSphere(duration - delay, delay)
       })
+      this.distanceEase = 1
 
     }
     if (nextShape == "flat") {
@@ -227,6 +232,7 @@ export default class App {
 
     }
     if (nextShape == "slider") {
+
       this.medias.forEach(media => {
         media.setSlider(duration - delay, delay)
       })
@@ -256,7 +262,7 @@ export default class App {
     const distance = (this.start - y) * 2;
 
     if (this.initiateChange) {
-      this.scroll.target = this.scroll.position + distance;
+      this.scroll.target = (this.scroll.position + distance);
     }
   }
 
@@ -270,7 +276,7 @@ export default class App {
     const speed = normalized.pixelY;
 
     if (this.initiateChange) {
-      this.scroll.target += speed * 0.5;
+      this.scroll.target += speed;
     }
 
 
@@ -320,23 +326,35 @@ export default class App {
     if (this.transition.current == "sphere") {
 
       this.initiateChange = true
-      this.scene.rotation.y = -(this.scroll.current / 1000) % 2 * Math.PI
+      this.scene.rotation.y = -(this.scroll.current / (1000 * (this.isMobile ? 0.3 : 1))) % 2 * Math.PI
     }
 
     if (this.transition.current == "slider") {
-      this.initiateChange = true
-      this.scene.position.x = -this.scroll.current / 40
+      let mapped = gsap.utils.mapRange(7000 * (this.isMobile ? 0.1 : 1), 0, 1, 0, this.scroll.current);
+      let clamped = gsap.utils.clamp(0, 1, Math.abs(mapped))
+      this.distanceEase = clamped
+      // console.log(clamped)
+      if (this.scroll.current < 1) {
+        //mapping range
+        this.initiateChange = true
+        this.scene.position.x = -this.scroll.current / (40 * (this.isMobile ? 0.3 : 1))
+        this.scene.position.x *= clamped
+        console.log(this.scene.position.x)
+      } else {
+        this.scroll.target = 0
+        this.scroll.current = 0
+      }
     }
 
     if (this.transition.current == "flat") {
       this.initiateChange = false;
     }
-    console.log(this.scene.rotation.y, this.scene.position.x, this.scroll.current)
+    // console.log(this.scene.rotation.y, this.scene.position.x, this.scroll.current)
 
     let factor = (this.scroll.current - this.scroll.target) / 2000
     this.medias.forEach(media => {
       // console.log(this.transition.current)
-      media.update(this.transition.current, factor)
+      media.update(this.transition.current, this.distanceEase * factor * (this.isMobile ? 3 : 1))
     })
 
     window.requestAnimationFrame(this.update.bind(this))

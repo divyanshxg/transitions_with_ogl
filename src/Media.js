@@ -4,7 +4,8 @@ import fragment from './shaders/fragment.glsl'
 import gsap from "gsap";
 
 export default class Media {
-  constructor({ renderer, scene, geometry, image, gl, index, positions, length }) {
+  constructor({ renderer, scene, geometry, image, gl, index, positions, length , division
+   }) {
     this.renderer = renderer;
     this.scene = scene;
     this.image = image;
@@ -13,7 +14,8 @@ export default class Media {
     this.index = index
     this.positions = positions
     this.length = length
-    this.scale = new Vec2(4, 4)
+    this.division = division
+    this.scale = new Vec2(4 / this.division, 4 /this.division)
     this.isFirst = true;
 
 
@@ -70,8 +72,8 @@ export default class Media {
   setSphere(duration, delay, offset) {
 
     gsap.to(this.mesh.scale, {
-      x: 4,
-      y: 4,
+      x: 4/this.division,
+      y: 4/this.division,
       duration: duration,
       ease: "power4.inOut",
       delay: delay
@@ -87,8 +89,8 @@ export default class Media {
 
     })
     gsap.to(this.program.uniforms.uPlaneSizes.value, {
-      x: 4,
-      y: 4,
+      x: 4/this.division,
+      y: 4/this.division,
       duration: duration,
       ease: "power4.inOut",
       delay: delay
